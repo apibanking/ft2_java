@@ -8,6 +8,19 @@ import java.util.Collections;
 import java.math.BigInteger;
 import java.util.UUID;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.KeyManagerFactory;
+import java.security.KeyStore;
+import java.io.FileInputStream;
+import java.security.NoSuchAlgorithmException;
+import java.security.KeyStoreException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.cert.CertificateException;
+import java.security.KeyManagementException;
+import java.security.UnrecoverableKeyException;
+
+
 import com.quantiguous.services.FundsTransferByCustomerService2;
 import com.quantiguous.services.FundsTransferByCustomerService2HttpService;
 
@@ -22,8 +35,9 @@ import com.quantiguous.services.CurrencyCodeType;
 
 
 public class FT2 {
-   public static void main(String[] argv) {
+   public static void main(String[] argv) throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
       enableTrace();
+      setClientCertificate();
 
       FundsTransferByCustomerService2HttpService svc =  new FundsTransferByCustomerService2HttpService();
       FundsTransferByCustomerService2 client = svc.getFundsTransferByCustomerService2HttpPort();
@@ -54,7 +68,7 @@ public class FT2 {
       appID                                  = "299915";
       customerID                             = "299915";
       debitAccountNo                         = "000380800000781";
-      transferType.value                     = TransferTypeType.ANY;
+      transferType.value                     = TransferTypeType.NEFT;
       transferCurrencyCode                   = CurrencyCodeType.INR;
       transferAmount                         = 100;
       remitterToBeneficiaryInfo              = "OnBoarding";
@@ -86,13 +100,23 @@ public class FT2 {
       headers.put("X-IBM-Client-Secret", Collections.singletonList("bP7eY0fA7tW7nX7yE6oY8qD7tF3yL3fE4uK0pJ7cP3kE0mV8rF"));
       ((BindingProvider)client).getRequestContext().put(MessageContext.HTTP_REQUEST_HEADERS, headers);
 
-   
+      // send the request
       client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
                       beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
                       uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
                      );
+      // set the url for 2 way ssl
+      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/fundsTransferByCustomerService2");
 
-      System.out.println("hello world");
+
+      // generate new request no
+      uniqueRequestNo                        = String.valueOf(UUID.randomUUID()).replaceAll("-","");
+
+      // send the request
+      client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
+                      beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
+                      uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
+                     );
    }
 
    private static void enableTrace() {
@@ -100,5 +124,25 @@ public class FT2 {
      System.setProperty("com.sun.xml.internal.ws.transport.http.client.HttpTransportPipe.dump", "true");
      System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
      System.setProperty("com.sun.xml.internal.ws.transport.http.HttpAdapter.dump", "true");
+   }
+
+   private static void setClientCertificate() {
+     System.setProperty("javax.net.ssl.keyStore", "qg-client.jks");
+     System.setProperty("javax.net.ssl.keyStorePassword", "apibanking");
+   }
+
+
+   private static void setSocketFactory(BindingProvider client) 
+      throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+      SSLContext sc = SSLContext.getInstance("TLS");
+      KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keyStore.load(new FileInputStream("qg-client.jks"), "apibanking".toCharArray());
+      factory.init(keyStore, "apibanking".toCharArray());
+      sc.init(factory.getKeyManagers(), null, null);
+
+      // specify a SSLSocket factory that will deal wit hthe 2 way SSL
+      ((BindingProvider)client).getRequestContext().put("com.sun.xml.ws.developer.JAXWSProperties.SSL_SOCKET_FACTORY", sc);
+      ((BindingProvider)client).getRequestContext().put("com.sun.xml.internal.ws.developer.JAXWSProperties.SSL_SOCKET_FACTORY", sc);
    }
 }
