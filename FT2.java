@@ -132,6 +132,8 @@ public class FT2 {
    }
 
 
+   /* the following method doesnt work with the oracle jdk, it may work when this runs within an app-server, 
+      the idea is to find out where is JAXWSProperties */
    private static void setSocketFactory(BindingProvider client) 
       throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
       SSLContext sc = SSLContext.getInstance("TLS");
