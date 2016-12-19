@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.math.BigInteger;
 import java.util.UUID;
 
+import java.net.URL;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
 import java.security.KeyStore;
@@ -39,7 +41,7 @@ public class FT2 {
       enableTrace();
       setClientCertificate();
 
-      FundsTransferByCustomerService2HttpService svc =  new FundsTransferByCustomerService2HttpService();
+      FundsTransferByCustomerService2HttpService svc =  new FundsTransferByCustomerService2HttpService(new URL("file:///Users/akhileshkataria/code/java/ft2/fundsTransferByCustomerService2.wsdl"));
       FundsTransferByCustomerService2 client = svc.getFundsTransferByCustomerService2HttpPort();
  
 
