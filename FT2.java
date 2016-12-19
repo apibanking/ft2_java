@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.math.BigInteger;
 import java.util.UUID;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.net.URL;
 
 import javax.net.ssl.SSLContext;
@@ -41,7 +43,11 @@ public class FT2 {
       enableTrace();
       setClientCertificate();
 
-      FundsTransferByCustomerService2HttpService svc =  new FundsTransferByCustomerService2HttpService(new URL("file:///Users/akhileshkataria/code/java/ft2/fundsTransferByCustomerService2.wsdl"));
+
+      Path currentRelativePath = Paths.get("");
+      String wsdlFilePath = currentRelativePath.toAbsolutePath().toString() + "/fundsTransferByCustomerService2.wsdl";
+
+      FundsTransferByCustomerService2HttpService svc =  new FundsTransferByCustomerService2HttpService(new URL("file://" + wsdlFilePath));
       FundsTransferByCustomerService2 client = svc.getFundsTransferByCustomerService2HttpPort();
  
 
