@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.net.URL;
+import java.util.Iterator;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.KeyManagerFactory;
@@ -24,6 +25,12 @@ import java.security.cert.CertificateException;
 import java.security.KeyManagementException;
 import java.security.UnrecoverableKeyException;
 
+import javax.xml.soap.SOAPException;
+import javax.xml.ws.soap.SOAPFaultException;
+import javax.xml.soap.SOAPFault;
+import javax.xml.namespace.QName;
+import javax.xml.soap.Detail;
+import javax.xml.soap.DetailEntry;
 
 import com.quantiguous.services.FundsTransferByCustomerService2;
 import com.quantiguous.services.FundsTransferByCustomerService2HttpService;
@@ -38,6 +45,7 @@ import com.quantiguous.services.AddressType;
 import com.quantiguous.services.CurrencyCodeType;
 
 
+@SuppressWarnings("unchecked")
 public class FT2 {
    public static void main(String[] argv) throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
       enableTrace();
@@ -109,10 +117,19 @@ public class FT2 {
       ((BindingProvider)client).getRequestContext().put(MessageContext.HTTP_REQUEST_HEADERS, headers);
 
       // send the request
-      client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
-                      beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
-                      uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
-                     );
+      try {
+         client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
+                         beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
+                         uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
+                        );
+      }
+      catch(SOAPFaultException e) {
+        parseFault(e.getFault());
+      }
+      catch(Exception e) {
+        e.printStackTrace(System.out); 
+      };
+
       // set the url for 2 way ssl
       ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/fundsTransferByCustomerService2");
 
@@ -121,10 +138,38 @@ public class FT2 {
       uniqueRequestNo                        = String.valueOf(UUID.randomUUID()).replaceAll("-","");
 
       // send the request
-      client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
-                      beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
-                      uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
-                     );
+      try {
+        client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
+                        beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
+                        uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
+                       );
+      } 
+      catch(SOAPFaultException e) {
+        parseFault(e.getFault());
+      }
+      catch (Exception e) {
+        e.printStackTrace(System.out); 
+      }
+   }
+
+
+   private static void parseFault(SOAPFault f) {
+      System.out.println(f.getFaultCode());
+      for (Iterator<QName> subCodesIterator = (Iterator<QName>)f.getFaultSubcodes(); subCodesIterator.hasNext();) {
+         System.out.println(subCodesIterator.next());
+      }
+      try {
+         for (Iterator<String> reasonTextsIterator = (Iterator<String>)f.getFaultReasonTexts(); reasonTextsIterator.hasNext();) {
+            System.out.println(reasonTextsIterator.next());
+         }
+      } catch (SOAPException x) {
+         x.printStackTrace(System.out); 
+      }
+      if ( f.hasDetail() ) {
+         for (Iterator<DetailEntry> detailEntriesIterator = (Iterator<DetailEntry>)f.getDetail().getDetailEntries(); detailEntriesIterator.hasNext();) {
+            System.out.println(detailEntriesIterator.next());
+         }
+      }
    }
 
    private static void enableTrace() {
