@@ -131,7 +131,8 @@ public class FT2 {
       };
 
       // set the url for 2 way ssl
-      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/fundsTransferByCustomerService2");
+//      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/fundsTransferByCustomerService2");
+      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/ssl/fundsTransferByCustomerSevice2");
 
 
       // generate new request no
