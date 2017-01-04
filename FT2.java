@@ -67,6 +67,8 @@ public class FT2 {
       Holder<TransactionStatusType> transactionStatus = new Holder<TransactionStatusType>();
       Holder<String> nameWithBeneficiaryBank          = new Holder<String>();
       Holder<String> requestReferenceNo               = new Holder<String>();
+      Holder<CurrencyCodeType> accountCurrencyCode    = new Holder<CurrencyCodeType>();
+      Holder<Float>  accountBalanceAmount             = new Holder<Float>();
 
       BeneficiaryType beneficiary                     = new BeneficiaryType();
       BeneficiaryDetailType beneficiaryDetail         = new BeneficiaryDetailType();
@@ -122,6 +124,10 @@ public class FT2 {
                          beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
                          uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
                         );
+
+         parseTransferRestul(uniqueResponseNo, attemptNo, lowBalanceAlert, transferType, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo);
+
+         client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       }
       catch(SOAPFaultException e) {
         parseFault(e.getFault());
@@ -144,6 +150,10 @@ public class FT2 {
                         beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
                         uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
                        );
+        
+        parseTransferRestul(uniqueResponseNo, attemptNo, lowBalanceAlert, transferType, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo);
+
+        client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       } 
       catch(SOAPFaultException e) {
         parseFault(e.getFault());
@@ -153,6 +163,44 @@ public class FT2 {
       }
    }
 
+   private static void parseTransferRestul(Holder<String> uniqueResponseNo, 
+                                           Holder<BigInteger> attemptNo, 
+                                           Holder<Boolean>lowBalanceAlert, 
+                                           Holder<TransferTypeType> transferType,
+                                           Holder<TransactionStatusType> transactionStatus, 
+                                           Holder<String> nameWithBeneficiaryBank, 
+                                           Holder<String> requestReferenceNo) 
+    {
+     System.out.println("Transfer Type Used (when you pass ANY, the bank choses the transfer type)" + transferType.value);
+
+     switch(transactionStatus.value.getStatusCode()) {
+       case "COMPLETED":
+         System.out.println("Transfer Completed (IMPS/FT)");
+         System.out.println("RRN: " + transactionStatus.value.getBankReferenceNo());
+         break;
+       case "SENT_TO_BENEFICIARY":
+         System.out.println("Funds sent to beneficiary bank, final status will be known after 2 hours (NEFT/RTGS)");
+         System.out.println("UTR: " + transactionStatus.value.getBankReferenceNo());
+         break;
+       case "SCHEDULED_FOR_NEXT_WORKDAY":
+         System.out.println("The transaction will be sent to the beneficiary bank the next working day, (NEFT/RTGS)");
+         break;
+       case "IN_PROCESS":
+         System.out.println("The transaction is not yet processed, can pass or fail, status will be known after 30 mins");
+         break;
+       case "RETURNED_FROM_BENEFICIARY":
+         System.out.println("The funds sent to the beneficiary bank have been returned (NEFT/RTGS)");
+         System.out.println("Return Code: " + transactionStatus.value.getSubStatusCode());
+         System.out.println("Return Reason: " + transactionStatus.value.getReason());
+         break;
+       case "FAILED":
+         System.out.println("The transaction failed");
+         System.out.println("Failure Code: " + transactionStatus.value.getSubStatusCode());
+         System.out.println("Failure Reason: " + transactionStatus.value.getReason());
+         break;
+     }
+
+   }
 
    private static void parseFault(SOAPFault f) {
       System.out.println(f.getFaultCode());
