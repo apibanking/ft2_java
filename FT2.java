@@ -44,6 +44,12 @@ import com.quantiguous.services.ContactType;
 import com.quantiguous.services.AddressType;
 import com.quantiguous.services.CurrencyCodeType;
 
+class ApiBankingFault
+{
+   String faultCode;
+   String faultSubCode;
+   String faultReason;
+}
 
 @SuppressWarnings("unchecked")
 public class FT2 {
@@ -130,7 +136,7 @@ public class FT2 {
          client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       }
       catch(SOAPFaultException e) {
-        parseFault(e.getFault());
+        printFault(e.getFault());
       }
       catch(Exception e) {
         e.printStackTrace(System.out); 
@@ -156,7 +162,7 @@ public class FT2 {
         client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       } 
       catch(SOAPFaultException e) {
-        parseFault(e.getFault());
+        printFault(e.getFault());
       }
       catch (Exception e) {
         e.printStackTrace(System.out); 
@@ -202,14 +208,31 @@ public class FT2 {
 
    }
 
-   private static void parseFault(SOAPFault f) {
-      System.out.println(f.getFaultCode());
+   private static String parseQName(QName val) {
+      if ( val != null ) {
+         if ( val.getNamespaceURI() == "http://www.quantiguous.com/services" ) {
+            return "ns:" + val.getLocalPart();
+         }
+         return val.toString();
+      }
+      return null;
+   }
+
+   private static ApiBankingFault parseFault(SOAPFault f) {
+      boolean first = false;
+      ApiBankingFault apiFault = new ApiBankingFault();
+
       for (Iterator<QName> subCodesIterator = (Iterator<QName>)f.getFaultSubcodes(); subCodesIterator.hasNext();) {
-         System.out.println(subCodesIterator.next());
+         if (first == false) { 
+            apiFault.faultCode = parseQName(subCodesIterator.next());
+            first = true;
+         } else {
+           apiFault.faultSubCode = parseQName(subCodesIterator.next());
+         }
       }
       try {
          for (Iterator<String> reasonTextsIterator = (Iterator<String>)f.getFaultReasonTexts(); reasonTextsIterator.hasNext();) {
-            System.out.println(reasonTextsIterator.next());
+            apiFault.faultReason = reasonTextsIterator.next();
          }
       } catch (SOAPException x) {
          x.printStackTrace(System.out); 
@@ -219,6 +242,16 @@ public class FT2 {
             System.out.println(detailEntriesIterator.next());
          }
       }
+ 
+      return apiFault;
+   }
+
+   private static void printFault(SOAPFault f) {
+      ApiBankingFault apiFault = parseFault(f);
+
+      System.out.println(apiFault.faultCode);
+      System.out.println(apiFault.faultSubCode);
+      System.out.println(apiFault.faultReason);
    }
 
    private static void enableTrace() {
