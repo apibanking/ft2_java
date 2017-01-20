@@ -73,6 +73,9 @@ public class FT2 {
    private String beneficiaryMobileNo = "9869581569";
    @Option(name="-beneficiaryMMID", usage="the beneficiary Account MMID")
    private String beneficiaryMMID = "9532870";
+   
+   @Option(name="-disableClientAuth", usage="to disable client auth (2-way ssl)")
+   private boolean disableClientAuth = false;
 
    public static void main(String[] argv) throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
      new FT2().doMain(argv);
@@ -149,8 +152,12 @@ public class FT2 {
 
       beneficiary.setBeneficiaryDetail(beneficiaryDetail);
 
-      // set the url
-      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in/app/uat/fundsTransferByCustomerService2");
+      // set the url, the URL for clientAuth (2-way SSL) & simple SSL are different
+      if (disableClientAuth) {
+        ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in/app/uat/fundsTransferByCustomerService2");
+      } else {
+        ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/ssl/fundsTransferByCustomerSevice2");        
+      }
 
       // set the user & password
       ((BindingProvider)client).getRequestContext().put(BindingProvider.USERNAME_PROPERTY, "testclient");
@@ -171,7 +178,7 @@ public class FT2 {
 
          parseTransferRestul(uniqueResponseNo, attemptNo, lowBalanceAlert, transferType, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo);
 
-         client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
+         // client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       }
       catch(SOAPFaultException e) {
         printFault(e.getFault());
@@ -180,31 +187,7 @@ public class FT2 {
         e.printStackTrace(System.out); 
       };
 
-      // set the url for 2 way ssl
-//      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/fundsTransferByCustomerService2");
-      ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/ssl/fundsTransferByCustomerSevice2");
-
-
-      // generate new request no
-      uniqueRequestNo                        = String.valueOf(UUID.randomUUID()).replaceAll("-","");
-
-      // send the request
-      try {
-        client.transfer(version, uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, 
-                        beneficiary, transferType, transferCurrencyCode, transferAmount, remitterToBeneficiaryInfo,
-                        uniqueResponseNo, attemptNo, lowBalanceAlert, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo
-                       );
-        
-        parseTransferRestul(uniqueResponseNo, attemptNo, lowBalanceAlert, transferType, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo);
-
-        client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
-      } 
-      catch(SOAPFaultException e) {
-        printFault(e.getFault());
-      }
-      catch (Exception e) {
-        e.printStackTrace(System.out); 
-      }
+    
    }
 
    private void parseTransferRestul(Holder<String> uniqueResponseNo, 
