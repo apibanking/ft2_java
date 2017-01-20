@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.math.BigInteger;
 import java.util.UUID;
 
+import java.util.ArrayList;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.net.URL;
@@ -44,6 +46,8 @@ import com.quantiguous.services.ContactType;
 import com.quantiguous.services.AddressType;
 import com.quantiguous.services.CurrencyCodeType;
 
+import org.kohsuke.args4j.*;
+
 class ApiBankingFault
 {
    String faultCode;
@@ -53,10 +57,46 @@ class ApiBankingFault
 
 @SuppressWarnings("unchecked")
 public class FT2 {
+
+
+   @Option(name="-?", usage="display this page")
+   private boolean showUsage = false;
+   
+   @Option(name="-transferAmount", usage="the transferAmount")
+   private float transferAmount = 10;
+   
+   @Option(name="-beneficiaryAccountNo", usage="the beneficiary Account No")
+   private String beneficiaryAccountNo = "026291800001191";
+   @Option(name="-beneficiaryIFSC", usage="the beneficiary Account IFSC")
+   private String beneficiaryIFSC = "HDFC0000001";
+   @Option(name="-beneficiaryMobileNo", usage="the beneficiary Mobile No")
+   private String beneficiaryMobileNo = "9869581569";
+   @Option(name="-beneficiaryMMID", usage="the beneficiary Account MMID")
+   private String beneficiaryMMID = "9532870";
+
    public static void main(String[] argv) throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+     new FT2().doMain(argv);
+  }
+   public void doMain(String[] argv) throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+      CmdLineParser parser = new CmdLineParser(this);
+
+      try {
+          // parse the arguments.
+          parser.parseArgument(argv);
+          if( showUsage ) {
+             parser.printUsage(System.err);
+             System.err.println();
+             return;
+          }
+
+      } catch( Exception e ) {
+          parser.printUsage(System.err);
+          System.err.println();
+          return;
+      }
+
       enableTrace();
       setClientCertificate();
-
 
       Path currentRelativePath = Paths.get("");
       String wsdlFilePath = currentRelativePath.toAbsolutePath().toString() + "/fundsTransferByCustomerService2.wsdl";
@@ -84,8 +124,6 @@ public class FT2 {
 
       String uniqueRequestNo, appID, purposeCode, customerID, debitAccountNo, remitterToBeneficiaryInfo;
       CurrencyCodeType transferCurrencyCode;
-      float transferAmount;
-
 
       version.value                          = "1.0";
       uniqueRequestNo                        = String.valueOf(UUID.randomUUID()).replaceAll("-","");
@@ -94,7 +132,7 @@ public class FT2 {
       debitAccountNo                         = "000380800000781";
       transferType.value                     = TransferTypeType.NEFT;
       transferCurrencyCode                   = CurrencyCodeType.INR;
-      transferAmount                         = 100;
+      transferAmount                         = transferAmount;
       remitterToBeneficiaryInfo              = "OnBoarding";
       purposeCode                            = null;
       
@@ -104,10 +142,10 @@ public class FT2 {
       beneficiaryDetail.setBeneficiaryName(name);
       beneficiaryDetail.setBeneficiaryAddress(address);
       beneficiaryDetail.setBeneficiaryContact(contact);
-      beneficiaryDetail.setBeneficiaryAccountNo("026291800001191");
-      beneficiaryDetail.setBeneficiaryIFSC("HDFC0000001");
-      beneficiaryDetail.setBeneficiaryMobileNo("9869581569");
-      beneficiaryDetail.setBeneficiaryMMID("9532870");
+      beneficiaryDetail.setBeneficiaryAccountNo(beneficiaryAccountNo);
+      beneficiaryDetail.setBeneficiaryIFSC(beneficiaryIFSC);
+      beneficiaryDetail.setBeneficiaryMobileNo(beneficiaryMobileNo);
+      beneficiaryDetail.setBeneficiaryMMID(beneficiaryMMID);
 
       beneficiary.setBeneficiaryDetail(beneficiaryDetail);
 
@@ -169,7 +207,7 @@ public class FT2 {
       }
    }
 
-   private static void parseTransferRestul(Holder<String> uniqueResponseNo, 
+   private void parseTransferRestul(Holder<String> uniqueResponseNo, 
                                            Holder<BigInteger> attemptNo, 
                                            Holder<Boolean>lowBalanceAlert, 
                                            Holder<TransferTypeType> transferType,
@@ -208,7 +246,7 @@ public class FT2 {
 
    }
 
-   private static String parseQName(QName val) {
+   private String parseQName(QName val) {
       if ( val != null ) {
          if ( val.getNamespaceURI() == "http://www.quantiguous.com/services" ) {
             return "ns:" + val.getLocalPart();
@@ -218,7 +256,7 @@ public class FT2 {
       return null;
    }
 
-   private static ApiBankingFault parseFault(SOAPFault f) {
+   private ApiBankingFault parseFault(SOAPFault f) {
       boolean first = false;
       ApiBankingFault apiFault = new ApiBankingFault();
 
@@ -246,7 +284,7 @@ public class FT2 {
       return apiFault;
    }
 
-   private static void printFault(SOAPFault f) {
+   private void printFault(SOAPFault f) {
       ApiBankingFault apiFault = parseFault(f);
 
       System.out.println(apiFault.faultCode);
@@ -254,14 +292,14 @@ public class FT2 {
       System.out.println(apiFault.faultReason);
    }
 
-   private static void enableTrace() {
+   private void enableTrace() {
      System.setProperty("com.sun.xml.ws.transport.http.client.HttpTransportPipe.dump", "true");
      System.setProperty("com.sun.xml.internal.ws.transport.http.client.HttpTransportPipe.dump", "true");
      System.setProperty("com.sun.xml.ws.transport.http.HttpAdapter.dump", "true");
      System.setProperty("com.sun.xml.internal.ws.transport.http.HttpAdapter.dump", "true");
    }
 
-   private static void setClientCertificate() {
+   private void setClientCertificate() {
      System.setProperty("javax.net.ssl.keyStore", "qg-client.jks");
      System.setProperty("javax.net.ssl.keyStorePassword", "apibanking");
    }
@@ -269,7 +307,7 @@ public class FT2 {
 
    /* the following method doesnt work with the oracle jdk, it may work when this runs within an app-server, 
       the idea is to find out where is JAXWSProperties */
-   private static void setSocketFactory(BindingProvider client) 
+   private void setSocketFactory(BindingProvider client) 
       throws NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, IOException, KeyStoreException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
       SSLContext sc = SSLContext.getInstance("TLS");
       KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
