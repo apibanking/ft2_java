@@ -34,6 +34,8 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.Detail;
 import javax.xml.soap.DetailEntry;
 
+import javax.xml.datatype.XMLGregorianCalendar;
+
 import com.quantiguous.services.FundsTransferByCustomerService2;
 import com.quantiguous.services.FundsTransferByCustomerService2HttpService;
 
@@ -116,9 +118,11 @@ public class FT2 {
       Holder<TransactionStatusType> transactionStatus = new Holder<TransactionStatusType>();
       Holder<String> nameWithBeneficiaryBank          = new Holder<String>();
       Holder<String> requestReferenceNo               = new Holder<String>();
+      Holder<CurrencyCodeType> transferredCurrencyCode = new Holder<CurrencyCodeType>();
       Holder<CurrencyCodeType> accountCurrencyCode    = new Holder<CurrencyCodeType>();
       Holder<Float>  accountBalanceAmount             = new Holder<Float>();
-
+      Holder<Float>  transferredAmount                = new Holder<Float>();
+      Holder<XMLGregorianCalendar> transactionDate    = new Holder<XMLGregorianCalendar>();
       BeneficiaryType beneficiary                     = new BeneficiaryType();
       BeneficiaryDetailType beneficiaryDetail         = new BeneficiaryDetailType();
       AddressType address                             = new AddressType();
@@ -155,6 +159,7 @@ public class FT2 {
       // set the url, the URL for clientAuth (2-way SSL) & simple SSL are different
       if (disableClientAuth) {
         ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in/app/uat/fundsTransferByCustomerService2");
+
       } else {
         ((BindingProvider)client).getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, "https://uatsky.yesbank.in:444/app/uat/ssl/fundsTransferByCustomerSevice2");        
       }
@@ -177,8 +182,9 @@ public class FT2 {
                         );
 
          parseTransferRestul(uniqueResponseNo, attemptNo, lowBalanceAlert, transferType, transactionStatus, nameWithBeneficiaryBank, requestReferenceNo);
+         client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
+		 client.getStatus(version, appID, customerID, uniqueRequestNo, transferType ,transferType, transactionDate, transferredAmount, transferredCurrencyCode, transactionStatus );
 
-         // client.getBalance(version.value, appID, customerID, debitAccountNo, version, accountCurrencyCode, accountBalanceAmount, lowBalanceAlert);
       }
       catch(SOAPFaultException e) {
         printFault(e.getFault());
