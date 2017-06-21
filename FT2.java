@@ -170,8 +170,8 @@ public class FT2 {
 
       // set the headers
       Map<String, List<String>> headers = new HashMap<String, List<String>>();
-      headers.put("X-IBM-Client-Id", Collections.singletonList("5bbc3c5c-6225-4935-8146-523b5883097a"));
-      headers.put("X-IBM-Client-Secret", Collections.singletonList("bP7eY0fA7tW7nX7yE6oY8qD7tF3yL3fE4uK0pJ7cP3kE0mV8rF"));
+      headers.put("X-IBM-Client-Id", Collections.singletonList("83e60ab6-2ced-4de9-9a04-2ab91988578f"));
+      headers.put("X-IBM-Client-Secret", Collections.singletonList("kG1vU7cO6gR8dH0eD1iT7qD6xM8vA8fS0bI4gB0aL0iQ4qF5cS"));
       ((BindingProvider)client).getRequestContext().put(MessageContext.HTTP_REQUEST_HEADERS, headers);
 
       // send the request
